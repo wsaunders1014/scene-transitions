@@ -1,5 +1,6 @@
 # scene-transitions
-GM can create simple transitions to play before activating scene for players.
+Allows GM to make simple transitions to show players before navigating to new screen. Can be used for narrative effect.
 
 # 0.0.1
-Beta: Create a journal entry. Journal text and image will be used to create overlay that appears when GM selects Transition.
+Alpha Release
+Click Create Transition on scene context menu. Add text, audio, and background image. Set length to show players and whether you want players to be able to close it.
