@@ -20,15 +20,16 @@ const DEFAULT_CONFIG = {
 
 
 let transitionForm;
+let activeTransition;
 class Transition {
-	constructor(sceneID,options){
-	
+	constructor(preview,sceneID,options){
+		this.preview = preview;
 		this.sceneID = sceneID;
 		this.options = mergeObject(this.constructor.defaultOptions, options || {});
 		
 		this.journal = null;
 		this.modal = null;
-		
+		this.timeout = null;
 		//console.log(this,sceneID)
 	}	
 	
@@ -40,7 +41,7 @@ class Transition {
 			bgImg:'',
 			bgColor:'#000000',
 			bgOpacity:0.7,
-			delay:2000,
+			delay:5000,
 			skippable:true,
 			content:""
 
@@ -62,23 +63,25 @@ class Transition {
 			if(game.user.isGM)
 				game.scenes.get(this.sceneID).activate();
 			this.modal.find('.transition-content').fadeIn();
-			this.setDelay();
+			if(!this.preview)
+				this.setDelay();
 		})
-		if(this.options.skippable){
+		if(this.options.skippable && !this.preview){
 			this.modal.on('click',()=>{
-				console.log('test')
-				this.endTransition()
+				this.destroy()
 			})
 		}
 	}
 	setDelay(){
-		setTimeout(function(){
-			this.endTransition()
+		this.timeout = setTimeout(function(){
+			this.destroy()
 		}.bind(this),this.options.delay)
 	}
-	endTransition(){
+	destroy(instant=false){
 		console.log('close')
-		this.modal.fadeOut(()=>{
+		let time = (instant) ? 0:400;
+		clearTimeout(this.timeout);
+		this.modal.fadeOut(time,()=>{
 			this.modal.remove();
 			//$('#transition').remove();
 			this.modal = null;
@@ -118,8 +121,8 @@ class TransitionForm extends FormApplication {
             title: DEFAULT_CONFIG.sceneTransition.form.title.create,
             template: `${PATH}/templates/transition-form.html`,
             classes: ["sheet","transition-form"],
-            height:600
-           
+            height:500,
+           	width:436
         });
     }
 
@@ -135,7 +138,7 @@ class TransitionForm extends FormApplication {
     	const w = window.innerWidth;
     	const h = window.innerHeight;
     	
-    	const preview = this.element.find('#transition-preview').find('.transition');
+    	const preview = $('#transition')
     	preview.find('.transition-bg').css({backgroundImage:'url('+this.transition.options.bgImg+')',opacity:this.transition.options.bgOpacity,backgroundColor:this.transition.options.bgColor});
     	preview.find('.transition-content').css({color:this.transition.options.fontColor})
     }
@@ -144,12 +147,12 @@ class TransitionForm extends FormApplication {
      */
     activateListeners(html) {
         super.activateListeners(html);
-     	this.updatePreview();
+     	//this.updatePreview();
         const bgImageInput = html.find('input[name="bgImg"]');
         const bgOpacityInput = html.find('input[name="bgOpacity"]');
         const textEditor = html.find('.mce-content-body');
         
-        const preview = $('#transition-preview').find('.transition');
+        const preview = $('#transition');
 
         bgImageInput.on('change', e =>{
        
@@ -161,7 +164,9 @@ class TransitionForm extends FormApplication {
         	this.data.bgOpacity = e.target.value;
         	preview.find('.transition-bg').css('opacity',e.target.value)
         })
-       
+       html.find('button[name="cancel"]').on('click',()=>{
+       	this.close();
+       })
        let editor = this.editors.content.mce;
         let interval;
         if(editor){
@@ -248,6 +253,10 @@ Hooks.on('init',() => {;
 		new Transition(sceneID, game.scenes.get(sceneID).getFlag('scene-transitions','transition').options).render()
 	})
 });
+Hooks.on('closeTransitionForm', ()=>{
+	activeTransition.destroy(true);
+	activeTransition = null;
+})
 // Hooks.on('renderSceneConfig',(config,html,settings)=>{
 // 	sceneID = settings.entity._id;
 // 	let entries = settings.journals;
@@ -301,8 +310,10 @@ function addPlayTransitionBtn(idField) {
         		return true;
         },
         callback: li => {	
-         	let sceneID = li.data(idField); 
-        	new Transition(sceneID, game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options).render()
+         	let sceneID = li.data(idField);
+         	game.scenes.preload(sceneID, true);
+        	activeTransition = new Transition(false, sceneID, game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options)
+        	activeTransition.render()
         	game.socket.emit('module.scene-transitions', sceneID);
         }
     };
@@ -320,8 +331,9 @@ function addCreateTransitionBtn(idField) {
         callback: li => {
         	let sceneID = li.data(idField);   
            
-          	let transition = new Transition(sceneID)
-          	transitionForm = new TransitionForm(transition).render(true);
+          	activeTransition = new Transition(true,sceneID)
+          	activeTransition.render()
+          	transitionForm = new TransitionForm(activeTransition).render(true);
         }
     };
 }
@@ -337,9 +349,10 @@ function addEditTransitionBtn(idField) {
         },
         callback: li => {
         	let scene = game.scenes.get(li.data(idField));   
-          	let transition = new Transition(li.data(idField),scene.getFlag('scene-transitions','transition').options)
+          	activeTransition = new Transition(true,li.data(idField),scene.getFlag('scene-transitions','transition').options)
+          	activeTransition.render()
           	
-          	transitionForm = new TransitionForm(transition).render(true);
+          	transitionForm = new TransitionForm(activeTransition).render(true);
         }
     };
 }
@@ -357,7 +370,8 @@ function addDeleteTransitionBtn(idField) {
         callback: li => {
         	let scene = game.scenes.get(li.data(idField));   
            
-          	let transition = scene.unsetFlag('scene-transitions','transition')
+          	scene.unsetFlag('scene-transitions','transition');
+
         }
     };
 }
