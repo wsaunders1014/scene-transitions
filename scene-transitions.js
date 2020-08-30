@@ -31,7 +31,7 @@ class Transition {
 		this.modal = null;
 		this.timeout = null;
 		this.audio = null;
-		//console.log(this,sceneID)
+		console.log(this,sceneID)
 	}	
 	
 	
@@ -263,7 +263,7 @@ Hooks.on('init',() => {;
 	console.log('Scene Transition')
 	CONFIG.debug.hooks = true;
 	game.socket.on('module.scene-transitions', async (sceneID) => {
-		new Transition(sceneID, game.scenes.get(sceneID).getFlag('scene-transitions','transition').options).render()
+		new Transition(false,sceneID, game.scenes.get(sceneID).getFlag('scene-transitions','transition').options).render()
 	})
 });
 Hooks.on('closeTransitionForm', ()=>{
