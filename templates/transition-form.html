@@ -1,0 +1,77 @@
+<form onsubmit="event.preventDefault()" autocomplete="off">
+    <div class="scroll">
+        <h2>Scene Transition</h2>
+        <!-- Preview? -->
+        <label>Preview</label>
+        <div id="transition-preview">
+            <div class="transition preview">
+                <div class="transition-bg"></div>
+                <div class="transition-content"></div>
+                <audio class="transition-audio">
+                    <source src="">
+                </audio>
+            </div>
+        </div>
+        <!--- Background Image Upload -->
+        <div class="form-group">
+            <label>{{localize "SCENES.BackgroundImage"}}</label>
+            <div class="form-fields">
+                {{filePicker target="bgImg" type="imagevideo"}}
+                <input class="image" type="text" name="bgImg" placeholder="{{localize 'File Path'}}" value="{{bgImg}}"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Background Opacity</label>
+            <div class="form-fields">
+                <input type="text" name="bgOpacity" placeholder="0.7" value="{{bgOpacity}}">
+            </div>
+        </div>
+        <div class="form-group">
+             <label>{{localize "SCENES.BackgroundColor"}}</label>
+            <div class="form-fields">
+                {{colorPicker target="bgColor" }}
+               <input type="text" name="bgColor" value="{{bgColor}}" data-dtype="String"/>
+                <input type="color" value="{{bgColor}}" data-edit="bgColor"/>
+
+            </div>
+        </div>
+
+        <!--- Transition text -->
+        <div style="margin-top:10px">
+            <label>Transition Text</label>
+            <div class="editor-box">
+               
+                {{editor content=content target="content" button=true editable=editable inline_styles=false owner=owner}}
+            </div>
+            
+        </div>
+        <!--- Music/Sound to play -->
+         <div class="form-group">
+            <label>Audio Source</label>
+            <div class="form-fields">
+                {{filePicker target="audio" type="audio"}}
+                <input class="image" type="text" name="audio" placeholder="path/audio.mp3" value="{{audio}}"/>
+            </div>
+        </div>
+
+    <!--- Options --->
+        <h3 class="form-header">Options</h3>
+        <p class="notes">Set options for transition</p>
+         <div class="form-group">
+            <label>Delay <span class="units">(in MS)</span></label>
+            <input type="text" name="delay" placeholder="5000" value="{{delay}}" data-dtype="Number"/>
+             <p class="notes">How long to play the transition before moving to scene.</p>
+        </div>
+        <div class="form-group">
+            <label>Skippable</label>
+            <input type="checkbox" name="skippable" data-dtype="Boolean" {{checked skippable}}/>
+            <p class="notes">Allow user to end transition before timer ends.</p>
+        </div>
+    </div>
+
+
+    <footer class="flexrow">
+        <button type="submit" name="save"><i class="fas fa-save"></i> Save and Close</button>
+        <button type="button" name="cancel"><i class="fas fa-times"></i> Cancel</button>
+    </footer>
+</form>
