@@ -30,6 +30,7 @@ class Transition {
 		this.journal = null;
 		this.modal = null;
 		this.timeout = null;
+		this.audio = null;
 		//console.log(this,sceneID)
 	}	
 	
@@ -37,7 +38,7 @@ class Transition {
 	static get defaultOptions(){
 		return{
 			fontColor:'#ffffff',
-			fontSize:'36px',
+			fontSize:'28px',
 			bgImg:'',
 			bgColor:'#000000',
 			bgOpacity:0.7,
@@ -52,11 +53,12 @@ class Transition {
 		this.modal = $('#transition');
 		this.modal.css({backgroundColor:this.options.bgColor})
 		this.modal.find('.transition-bg').css({backgroundImage:'url('+this.options.bgImg+')',opacity:this.options.bgOpacity})
-		this.modal.find('.transition-content').html(this.options.content);
+		this.modal.find('.transition-content').css({color:this.options.fontColor,fontSize:this.options.fontSize}).html(this.options.content);
 		if(this.options.audio !=""){
+			this.audio = this.modal.find('audio')[0];
 			this.modal.find('audio').attr('src',this.options.audio);
-			this.modal.find('audio')[0].load();
-			this.modal.find('audio')[0].play();
+			this.audio.load();
+			this.audio.play();
 		}
 
 		this.modal.fadeIn(400,()=>{
@@ -78,12 +80,12 @@ class Transition {
 		}.bind(this),this.options.delay)
 	}
 	destroy(instant=false){
-		console.log('close')
+		
 		let time = (instant) ? 0:400;
 		clearTimeout(this.timeout);
 		this.modal.fadeOut(time,()=>{
+			this.audio.pause();
 			this.modal.remove();
-			//$('#transition').remove();
 			this.modal = null;
 		})
 	}
@@ -150,6 +152,8 @@ class TransitionForm extends FormApplication {
      	//this.updatePreview();
         const bgImageInput = html.find('input[name="bgImg"]');
         const bgOpacityInput = html.find('input[name="bgOpacity"]');
+        
+        const fontSizeInput = html.find('input[name="fontSize"]')
         const textEditor = html.find('.mce-content-body');
         
         const preview = $('#transition');
@@ -164,10 +168,13 @@ class TransitionForm extends FormApplication {
         	this.data.bgOpacity = e.target.value;
         	preview.find('.transition-bg').css('opacity',e.target.value)
         })
-       html.find('button[name="cancel"]').on('click',()=>{
-       	this.close();
-       })
-       let editor = this.editors.content.mce;
+        fontSizeInput.on('change', e => {
+        	preview.find('.transition-content').css('font-size',e.target.value);
+        })
+        html.find('button[name="cancel"]').on('click',()=>{
+       		this.close();
+        })
+        let editor = this.editors.content.mce;
         let interval;
         if(editor){
         	editor.on('focus',e=>{
@@ -234,9 +241,15 @@ class TransitionForm extends FormApplication {
     _onChangeColorPicker(event) {
     	const input = event.target;
     	const form = input.form;
+    	console.log(event,input,$(input).attr('data-edit'))
+
     	form[input.dataset.edit].value = input.value;
-    	this.data.bgColor = event.target.value;
-    	$('#transition-preview .transition.preview').css('background-color',event.target.value)
+    	if($(input).attr('data-edit') == 'bgColor'){
+    		this.data.bgColor = event.target.value;
+    		$('#transition').css('background-color',event.target.value)
+    	}else if($(input).attr('data-edit') == 'fontColor'){
+    		$('#transition').find('.transition-content').css('color',event.target.value)
+    	}
     }
     /**
      * 
