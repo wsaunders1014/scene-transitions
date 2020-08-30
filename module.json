@@ -3,7 +3,7 @@
   "title": "Scene Transitions",
   "description": "Create transition between scenes.",
   "authors": [{"name":"Will Saunders","email":"willsaunders1014@gmail.com" }],
-  "version": "0.0.1",
+  "version": "0.0.2",
   "minimumCoreVersion": "0.6.2",
   "compatibleCoreVersion":"0.6.6",
   "scripts": [
