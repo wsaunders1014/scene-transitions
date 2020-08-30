@@ -54,7 +54,7 @@ class Transition {
 		this.modal.css({backgroundColor:this.options.bgColor})
 		this.modal.find('.transition-bg').css({backgroundImage:'url('+this.options.bgImg+')',opacity:this.options.bgOpacity})
 		this.modal.find('.transition-content').css({color:this.options.fontColor,fontSize:this.options.fontSize}).html(this.options.content);
-		if(this.options.audio !=""){
+		if(this.options.audio){
 			this.audio = this.modal.find('audio')[0];
 			this.modal.find('audio').attr('src',this.options.audio);
 			this.audio.load();
@@ -62,7 +62,7 @@ class Transition {
 		}
 
 		this.modal.fadeIn(400,()=>{
-			if(game.user.isGM)
+			if(game.user.isGM && !this.preview)
 				game.scenes.get(this.sceneID).activate();
 			this.modal.find('.transition-content').fadeIn();
 			if(!this.preview)
