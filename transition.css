@@ -23,12 +23,18 @@
 }
 .transition .transition-content{
 	display: none;
-	position: relative;
+	position: absolute;
 	z-index: 10;
 	color:#fff;
 	font-size:28px;
-
+	top: 50%;
+    transform: translateY(-50%);
+    max-height: 100%;
+    overflow: hidden;
+    width: 80%;
+    left: 10%;
     line-height: 2em;
+    text-align: center;
 }
 .transition.preview{
     position: absolute;

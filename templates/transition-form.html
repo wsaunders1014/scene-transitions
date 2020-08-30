@@ -35,7 +35,18 @@
 
             </div>
         </div>
-
+        <div class="form-group">
+            <label>Font Size</label>
+            <input type="text" name="fontSize" placeholder="28px" value="{{fontSize}}">
+        </div>
+        <div class="form-group">
+            <label>Font Color</label>
+            <div class="form-fields">
+                {{colorPicker target="fontColor" }}
+                <input type="text" name="fontColor" value="{{fontColor}}" data-dtype="String"/>
+                <input type="color" value="{{fontColor}}" data-edit="fontColor"/>
+            </div>
+        </div>
         <!--- Transition text -->
         <div style="margin-top:10px">
             <label>Transition Text</label>
