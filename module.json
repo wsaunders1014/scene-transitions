@@ -5,7 +5,7 @@
   "authors": [{"name":"Will Saunders","email":"willsaunders1014@gmail.com" }],
   "version": "0.0.1",
   "minimumCoreVersion": "0.6.2",
-  "compatibleCoreVersion":"0.6.4",
+  "compatibleCoreVersion":"0.6.6",
   "scripts": [
   	"scene-transitions.js"
   ],
@@ -13,8 +13,8 @@
     "transition.css"
   ],
   "socket": true,
-  "changelog":"https://raw.githubusercontent.com/wsaunders1014/scene-transitions/master/README.md",
+  "changelog":"https://raw.githubusercontent.com/wsaunders1014/scene-transitions/0.0.1/README.md",
   "url":"https://github.com/wsaunders1014/scene-transitions",
-  "manifest":"https://raw.githubusercontent.com/wsaunders1014/scene-transitions/master/module.json",
-  "download":"https://github.com/wsaunders1014/scene-transitions/archive/master.zip"
+  "manifest":"https://raw.githubusercontent.com/wsaunders1014/scene-transitions/0.0.1/module.json",
+  "download":"https://github.com/wsaunders1014/scene-transitions/archive/0.0.1.zip"
 }
