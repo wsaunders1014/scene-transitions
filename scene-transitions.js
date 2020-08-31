@@ -84,7 +84,8 @@ class Transition {
 		let time = (instant) ? 0:400;
 		clearTimeout(this.timeout);
 		this.modal.fadeOut(time,()=>{
-			this.audio.pause();
+			if(this.audio !== null)
+				this.audio.pause();
 			this.modal.remove();
 			this.modal = null;
 		})
@@ -112,6 +113,7 @@ class TransitionForm extends FormApplication {
         //console.log(object,options)
         this.transition = object || {}
         this.data = {};
+        this.interval = null;
     }
 
     /**
@@ -175,15 +177,15 @@ class TransitionForm extends FormApplication {
        		this.close();
         })
         let editor = this.editors.content.mce;
-        let interval;
+;
         if(editor){
         	editor.on('focus',e=>{
-        		interval = setInterval(function(){
+        		this.interval = setInterval(function(){
         			preview.find('.transition-content').html(editor.getBody().innerHTML)
         		},500)
         	})
         	editor.on('blur', e=>{
-        		clearInterval(interval);
+        		clearInterval(this.interval);
         	})
         }
     }
@@ -266,9 +268,10 @@ Hooks.on('init',() => {;
 		new Transition(false,sceneID, game.scenes.get(sceneID).getFlag('scene-transitions','transition').options).render()
 	})
 });
-Hooks.on('closeTransitionForm', ()=>{
+Hooks.on('closeTransitionForm', (form)=>{
 	activeTransition.destroy(true);
 	activeTransition = null;
+	clearInterval(form.interval);
 })
 // Hooks.on('renderSceneConfig',(config,html,settings)=>{
 // 	sceneID = settings.entity._id;
