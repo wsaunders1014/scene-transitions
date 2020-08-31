@@ -1,5 +1,9 @@
 # scene-transitions
 Allows GM to make simple transitions to show players before navigating to new screen. Can be used for narrative effect.
+
+# 0.0.4
+Fixed some bugs.
+
 # 0.0.3
 Hotfix: Socket emit transition did not have preview mode set.
 
