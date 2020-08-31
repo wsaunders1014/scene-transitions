@@ -92,7 +92,7 @@ class Transition {
 	}
 	updateData(newData){
 		this.options = mergeObject(this.options,newData);
-		console.log(this);
+		
 		return this;
 
 	}
@@ -243,7 +243,7 @@ class TransitionForm extends FormApplication {
     _onChangeColorPicker(event) {
     	const input = event.target;
     	const form = input.form;
-    	console.log(event,input,$(input).attr('data-edit'))
+    	
 
     	form[input.dataset.edit].value = input.value;
     	if($(input).attr('data-edit') == 'bgColor'){
@@ -263,7 +263,6 @@ class TransitionForm extends FormApplication {
 }
 Hooks.on('init',() => {;
 	console.log('Scene Transition')
-	CONFIG.debug.hooks = true;
 	game.socket.on('module.scene-transitions', async (sceneID) => {
 		new Transition(false,sceneID, game.scenes.get(sceneID).getFlag('scene-transitions','transition').options).render()
 	})

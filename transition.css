@@ -85,9 +85,3 @@
 	margin: 0px auto 20px;
     outline: 1px solid;
 }
-
-
-/* DELETE THIS */
-.notification.error.permanent {
-	display: none !important;
-}
