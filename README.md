@@ -1,6 +1,9 @@
 # scene-transitions
 Allows GM to make simple transitions to show players before navigating to new screen. Can be used for narrative effect.
 
+# 0.0.5
+Background size and positioning is now configurable.
+
 # 0.0.4
 Fixed some bugs.
 
