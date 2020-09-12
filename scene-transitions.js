@@ -40,6 +40,8 @@ class Transition {
 			fontColor:'#ffffff',
 			fontSize:'28px',
 			bgImg:'',
+            bgPos:'center center',
+            bgSize:'cover',
 			bgColor:'#000000',
 			bgOpacity:0.7,
 			delay:5000,
@@ -52,7 +54,7 @@ class Transition {
 		$('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div><audio><source src=""></audio></div>');
 		this.modal = $('#transition');
 		this.modal.css({backgroundColor:this.options.bgColor})
-		this.modal.find('.transition-bg').css({backgroundImage:'url('+this.options.bgImg+')',opacity:this.options.bgOpacity})
+		this.modal.find('.transition-bg').css({backgroundImage:'url('+this.options.bgImg+')',opacity:this.options.bgOpacity,backgroundSize:this.options.bgSize,backgroundPosition:this.options.bgPos})
 		this.modal.find('.transition-content').css({color:this.options.fontColor,fontSize:this.options.fontSize}).html(this.options.content);
 		if(this.options.audio){
 			this.audio = this.modal.find('audio')[0];
@@ -154,12 +156,22 @@ class TransitionForm extends FormApplication {
      	//this.updatePreview();
         const bgImageInput = html.find('input[name="bgImg"]');
         const bgOpacityInput = html.find('input[name="bgOpacity"]');
-        
+        const bgSizeInput = html.find('input[name="bgSize"]');
+        const bgPosInput = html.find('input[name="bgPos"]');
         const fontSizeInput = html.find('input[name="fontSize"]')
         const textEditor = html.find('.mce-content-body');
         
         const preview = $('#transition');
-
+         bgSizeInput.on('change', e =>{
+       
+            this.data.bgSize = e.target.value;
+            preview.find('.transition-bg').css('background-size',this.data.bgSize)
+        });
+        bgPosInput.on('change', e =>{
+            console.log('test')
+            this.data.bgPos = e.target.value;
+            preview.find('.transition-bg').css('background-position',this.data.bgPos)
+        });
         bgImageInput.on('change', e =>{
        
         	this.data.bgImg = e.target.value;
