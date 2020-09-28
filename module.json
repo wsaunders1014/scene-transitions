@@ -3,8 +3,8 @@
   "title": "Scene Transitions",
   "description": "Create transition between scenes.",
   "authors": [{"name":"Will Saunders","email":"willsaunders1014@gmail.com" }],
-  "version": "0.0.5",
-  "minimumCoreVersion": "0.6.2",
+  "version": "0.0.6",
+  "minimumCoreVersion": "0.6.4",
   "compatibleCoreVersion":"0.6.6",
   "scripts": [
   	"scene-transitions.js"
@@ -16,5 +16,5 @@
   "changelog":"https://raw.githubusercontent.com/wsaunders1014/scene-transitions/master/README.md",
   "url":"https://github.com/wsaunders1014/scene-transitions",
   "manifest":"https://raw.githubusercontent.com/wsaunders1014/scene-transitions/master/module.json",
-  "download":"https://github.com/wsaunders1014/scene-transitions/releases/download/0.0.5/scene-transitions.zip"
+  "download":"https://github.com/wsaunders1014/scene-transitions/releases/download/0.0.6/scene-transitions.zip"
 }
