@@ -400,12 +400,10 @@ Hooks.on("getSceneDirectoryEntryContext", (html, contextOptions) => {
     contextOptions.push(addEditTransitionBtn('entityId'));
     contextOptions.push(addDeleteTransitionBtn('entityId'));
 });
-Hooks.on("getJournalEntryContext", (html, contextOptions) => {
-    console.log('test')
-})
+
 Hooks.on('getJournalDirectoryEntryContext', (html,contextOptions)=>{
     contextOptions.push(addPlayTransitionBtnJE('entityId'));
-    console.log('test')
+
 });
 function addPlayTransitionBtnJE(idField) {
     return {
@@ -417,10 +415,10 @@ function addPlayTransitionBtnJE(idField) {
                 return true;
         },
         callback: li => {
-            console.log(idField,li)
+
             let id = li.data(idField);
-            console.log(id)
-           let journal = game.journal.get(id).data;
+
+            let journal = game.journal.get(id).data;
             let options = {
                 content:journal.content,
                 bgImg:journal.img
@@ -434,7 +432,7 @@ function addPlayTransitionBtnJE(idField) {
     };
 }
 Hooks.on('renderJournalSheet', (journal)=>{
-    console.log(journal)
+
     if(game.user.isGM && $('#'+journal.id+' > header').find('.play-transition').length == 0){
          $('<a class="play-transition"><i class="fas fa-play-circle"></i> Play as Transition</a>').insertAfter('#'+journal.id+' > header > h4');
     }
