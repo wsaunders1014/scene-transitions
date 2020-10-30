@@ -31,7 +31,7 @@ class Transition {
 		this.modal = null;
 		this.timeout = null;
 		this.audio = null;
-        console.log(this.options,options)
+        
 	}	
 	
 	
@@ -88,9 +88,8 @@ class Transition {
 		
 		let time = (instant) ? 0:400;
 		clearTimeout(this.timeout);
+		if(this.audio !== null) this.fadeAudio(this.audio, time);
 		this.modal.fadeOut(time,()=>{
-			if(this.audio !== null)
-				this.audio.pause();
 			this.modal.remove();
 			this.modal = null;
 		})
@@ -110,6 +109,25 @@ class Transition {
 	getJournalImg(){
 		return this.journal.img;
 	}
+
+
+	fadeAudio(audio, time){
+		if(audio.volume){
+			let volume = audio.volume;
+			let targetVolume = 0;
+			let speed = volume / time * 100;  
+			audio.volume = volume;
+			let fade = function() {
+				volume -= speed;
+				audio.volume = volume.toFixed(1);
+				if(volume.toFixed(1) <= targetVolume){
+					clearInterval(audioFadeTimer);
+				};
+			}
+			fade();
+			let audioFadeTimer = setInterval(fade,100);
+		};
+	};
 }
 
 class TransitionForm extends FormApplication {
@@ -119,6 +137,7 @@ class TransitionForm extends FormApplication {
         this.transition = object || {}
         this.data = {};
         this.interval = null;
+       // this.editors['content']={options:{}}
     }
 
     /**
@@ -154,9 +173,72 @@ class TransitionForm extends FormApplication {
     /**
      * 
      */
+    async activateEditor(name, options={}, initialContent="") {
+        const editor = this.editors[name];
+        if ( !editor ) throw new Error(`${name} is not a registered editor name!`);
+        options = mergeObject(editor.options, options);
+        options.height = options.target.offsetHeight;
+        await TextEditor.create(options, initialContent || editor.initial).then(mce => {
+          editor.mce = mce;
+          editor.changed = false;
+          editor.active = true;
+          //mce.focus();
+          mce.on('change', ev => editor.changed = true);
+        });
+        return true;
+    }
+    async _activateEditor(div) {
+
+        // Get the editor content div
+        const name = div.getAttribute("data-edit");
+        const button = div.nextElementSibling;
+        const hasButton = button && button.classList.contains("editor-edit");
+        const wrap = div.parentElement.parentElement;
+        const wc = $(div).parents(".window-content")[0];
+
+        // Determine the preferred editor height
+        const heights = [wrap.offsetHeight, wc ? wc.offsetHeight : null];
+        if ( div.offsetHeight > 0 ) heights.push(div.offsetHeight);
+        let height = Math.min(...heights.filter(h => Number.isFinite(h)));
+
+        // Get initial content
+        const data = this.object instanceof Entity ? this.object.data : this.object;
+        const initialContent = getProperty(data, name);
+        const editorOptions = {
+          target: div,
+          height: height,
+          save_onsavecallback: mce => this.saveEditor(name)
+        };
+
+        // Add record to editors registry
+        this.editors[name] = {
+          target: name,
+          button: button,
+          hasButton: hasButton,
+          mce: null,
+          active: !hasButton,
+          changed: false,
+          options: editorOptions,
+          initial: initialContent
+        };
+
+        // If we are using a toggle button, delay activation until it is clicked
+        // if (hasButton) button.onclick = event => {
+        //   button.style.display = "none";
+        //   await this.activateEditor(name, editorOptions, initialContent);
+        // };
+
+        // Otherwise activate immediately
+       // else await this.activateEditor(name, editorOptions, initialContent);
+        
+        return true;
+    }
     activateListeners(html) {
-        super.activateListeners(html);
+        //super.activateListeners(html);
      	//this.updatePreview();
+         this.form.onsubmit = this._onSubmit.bind(this);
+         html.find('button.file-picker').each((i, button) => this._activateFilePicker(button));
+         html.on("change", "input,select,textarea", this._onChangeInput.bind(this));
         const bgImageInput = html.find('input[name="bgImg"]');
         const bgOpacityInput = html.find('input[name="bgOpacity"]');
         const bgSizeInput = html.find('input[name="bgSize"]');
@@ -191,67 +273,51 @@ class TransitionForm extends FormApplication {
         html.find('button[name="cancel"]').on('click',()=>{
        		this.close();
         })
-        let editor = this.editors.content.mce;
-;
-        if(editor){
-        	editor.on('focus',e=>{
-        		this.interval = setInterval(function(){
-        			preview.find('.transition-content').html(editor.getBody().innerHTML)
-        		},500)
-        	})
-        	editor.on('blur', e=>{
-        		clearInterval(this.interval);
-        	})
-        }
+        this._activateEditor(html.find('.editor-content')[0]).then(async ()=>{
+            await this.activateEditor('content', this.editors.content.options, this.editors.content.initial);
+         
+            this.editors.content.mce.on('focus',(e)=>{
+               
+                this.interval = setInterval(()=>{
+                    
+                    preview.find('.transition-content').html(this.editors.content.mce.getBody().innerHTML)
+                },500)
+            })
+            this.editors.content.mce.on('blur', e=>{
+                clearInterval(this.interval);
+            })
+        
+            
+        })      
     }
    
         
     async _onSubmit(event, {updateData=null, preventClose=false, preventRender=false}={}) {
     	event.preventDefault();
-    	if ( !this.rendered || !this.options.editable || this._submitting ) return false;
-	    this._submitting = true;
+        const states = this.constructor.RENDER_STATES;
+        if ( (this._state === states.NONE) || !this.options.editable || this._submitting ) return false;
+        this._submitting = true;
 
 	    // Acquire and validate Form Data
 	    const form = this.element.find("form").first()[0];
-	    const FD = this._getFormData(form);
-	    const dtypes = FD._dtypes;
 
-	    // Construct update data object by casting form data
-	    let formData = Array.from(FD).reduce((obj, [k, v]) => {
-	      let dt = dtypes[k];
-	      if ( dt === "Number" ) obj[k] = v !== "" ? Number(v) : null;
-	      else if ( dt === "Boolean" ) obj[k] = v === "true";
-	      else if ( dt === "Radio" ) obj[k] = JSON.parse(v);
-	      else obj[k] = v;
-	      return obj;
-	    }, {});
+        // Flag if the application is staged to close to prevent callback renders
+        const priorState = this._state;
+        if ( this.options.closeOnSubmit ) this._state = states.CLOSING;
+        if ( preventRender && (this._state !== states.CLOSING )) this._state = states.RENDERING;
 
-	    // Incorporate any additional provided updateData
-	    if ( updateData && (typeof updateData === "object") ) {
-	      formData = mergeObject(formData, updateData);
-	    }
-
-	    // Flag if the application is staged to close to prevent callback renders
-	    if ( this.options.closeOnSubmit ) this._state = this.constructor.RENDER_STATES.CLOSING;
-	    else if ( preventRender ) this._state = this.constructor.RENDER_STATES.RENDERING;
-
-	    // Trigger the object update
-	    try {
-	      await this._updateObject(event, formData);
-	    } catch(err) {
-	      console.error(err);
-	      preventClose = true;
-	    }
-
-	    // Restore flags and (optionally) close
-	    this._submitting = false;
-	    this._state = this.constructor.RENDER_STATES.RENDERED;
-	 
+        // Trigger the object update
+        const formData = this._getSubmitData(updateData);
+       
+	   
 	   this.transition.updateData(formData);
 	  if(sceneID != false)
 	       game.scenes.get(this.transition.sceneID).setFlag('scene-transitions','transition',this.transition)
 	  
-	   this.close();
+	   this._submitting = false;
+        this._state = priorState;
+        if ( this.options.closeOnSubmit && !preventClose ) this.close({submit: false});
+        return formData;
 	  
 
 	}
@@ -282,7 +348,7 @@ Hooks.on('init',() => {;
         console.log(data.sceneID,data.options)
 		new Transition(false,data.sceneID, data.options).render()
 	})
-    CONFIG.debug.hooks = true;
+   
 });
 Hooks.on('closeTransitionForm', (form)=>{
 	activeTransition.destroy(true);
