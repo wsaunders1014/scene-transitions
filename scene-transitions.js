@@ -88,9 +88,8 @@ class Transition {
 		
 		let time = (instant) ? 0:400;
 		clearTimeout(this.timeout);
+		if(this.audio !== null) this.fadeAudio(this.audio, time);
 		this.modal.fadeOut(time,()=>{
-			if(this.audio !== null)
-				this.audio.pause();
 			this.modal.remove();
 			this.modal = null;
 		})
@@ -110,6 +109,25 @@ class Transition {
 	getJournalImg(){
 		return this.journal.img;
 	}
+
+
+	fadeAudio(audio, time){
+		if(audio.volume){
+			let volume = audio.volume;
+			let targetVolume = 0;
+			let speed = volume / time * 100;  
+			audio.volume = volume;
+			let fade = function() {
+				volume -= speed;
+				audio.volume = volume.toFixed(1);
+				if(volume.toFixed(1) <= targetVolume){
+					clearInterval(audioFadeTimer);
+				};
+			}
+			fade();
+			let audioFadeTimer = setInterval(fade,100);
+		};
+	};
 }
 
 class TransitionForm extends FormApplication {
