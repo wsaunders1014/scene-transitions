@@ -26,6 +26,8 @@ game.socket.emit('module.scene-transitions', data);
 ```
 To play a transition without a scene activation, simple pass `false` as the sceneID in the data object.
 
+# 0.0.7
+0.7.5 Fix. Pull Request merge to fade out audio.
 
 # 0.0.6
 You can now create and send a transition to all players using a macro. There is now a 'Play as Transition' option on the context menu for Journal Entries and it's sheet header. This takes the content and image from the journal and makes a transition out of it with the default settings.

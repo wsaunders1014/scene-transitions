@@ -237,6 +237,8 @@ class TransitionForm extends FormApplication {
         //super.activateListeners(html);
      	//this.updatePreview();
          this.form.onsubmit = this._onSubmit.bind(this);
+         html.find('button.file-picker').each((i, button) => this._activateFilePicker(button));
+         html.on("change", "input,select,textarea", this._onChangeInput.bind(this));
         const bgImageInput = html.find('input[name="bgImg"]');
         const bgOpacityInput = html.find('input[name="bgOpacity"]');
         const bgSizeInput = html.find('input[name="bgSize"]');
