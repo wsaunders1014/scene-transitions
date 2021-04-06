@@ -1,4 +1,4 @@
-<form onsubmit="event.preventDefault()" autocomplete="off">
+<form autocomplete="off">
     <div class="scroll">
         <h2>Scene Transition</h2>
         <!-- Preview? -->
@@ -76,10 +76,20 @@
     <!--- Options --->
         <h3 class="form-header">Options</h3>
         <p class="notes">Set options for transition</p>
-         <div class="form-group">
+        <div class="form-group">
+            <label>Fade in <span class="units">(in MS)</span></label>
+            <input type="text" id="fadeIn" name="fadeIn" placeholder="400" value="{{fadeIn}}" data-dtype="Number"/>
+             <p class="notes">How long to fade in the transition</p>
+        </div> 
+        <div class="form-group">
             <label>Delay <span class="units">(in MS)</span></label>
             <input type="text" name="delay" placeholder="5000" value="{{delay}}" data-dtype="Number"/>
              <p class="notes">How long to play the transition before moving to scene.</p>
+        </div>
+        <div class="form-group">
+            <label>Fade out <span class="units">(in MS)</span></label>
+            <input type="text" name="fadeOut" placeholder="400" value="{{fadeOut}}" data-dtype="Number"/>
+             <p class="notes">How long to fade out the transition</p>
         </div>
         <div class="form-group">
             <label>Skippable</label>
@@ -90,7 +100,7 @@
 
 
     <footer class="flexrow">
-        <button type="submit" name="save"><i class="fas fa-save"></i> Save and Close</button>
+        <button type="button" name="save"><i class="fas fa-save"></i> Save and Close</button>
         <button type="button" name="cancel"><i class="fas fa-times"></i> Cancel</button>
     </footer>
 </form>

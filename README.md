@@ -14,9 +14,12 @@ let data = {
 		bgSize:'cover',
 		bgColor:'#333333',
 		bgOpacity:0.7,
+		fadeIn: 400 //how long to fade in
 		delay:5000, //how long for transition to stay up
+		fadeOut: 400 //how long to fade out
 		skippable:true, //Allows players to skip transition with a click before delay runs out.
-		content:"TEST MACRO"
+		content:"TEST MACRO",
+		audio: "" //path to audio file
 	}
 }
 
@@ -25,6 +28,9 @@ activeTransition.render()// These 2 lines can be omitted if you don't want to pe
 game.socket.emit('module.scene-transitions', data);
 ```
 To play a transition without a scene activation, simple pass `false` as the sceneID in the data object.
+
+# 0.0.8
+0.8 Compatability. Minor fixes and clean up
 
 # 0.0.7
 0.7.5 Fix. Pull Request merge to fade out audio.
