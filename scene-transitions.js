@@ -48,7 +48,7 @@ class Transition {
 		this.modal = null;
 		this.timeout = null;
 		this.audio = null;
-        
+		this.users = null;
 	}	
 	
 	static get defaultOptions(){
@@ -56,8 +56,8 @@ class Transition {
 			fontColor:'#ffffff',
 			fontSize:'28px',
 			bgImg:'',
-            bgPos:'center center',
-            bgSize:'cover',
+			bgPos:'center center',
+			bgSize:'cover',
 			bgColor:'#000000',
 			bgOpacity:0.7,
 			fadeIn: 400,
@@ -379,8 +379,10 @@ class TransitionForm extends FormApplication {
 Hooks.on('init',() => {;
 	console.log('Scene Transition')
 	game.socket.on('module.scene-transitions', async (data) => {
-        console.log(data.sceneID,data.options)
-		new Transition(false,data.sceneID, data.options).render()
+		console.log(data.sceneID,data.options);
+		if (!data.users || data.users.contains(game.userId)) {
+			new Transition(false,data.sceneID, data.options).render();
+		}
 	})
    
 });
