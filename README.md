@@ -29,6 +29,9 @@ game.socket.emit('module.scene-transitions', data);
 ```
 To play a transition without a scene activation, simple pass `false` as the sceneID in the data object.
 
+# 0.0.8
+0.8 Compatability. Minor fixes and clean up
+
 # 0.0.7
 0.7.5 Fix. Pull Request merge to fade out audio.
 
