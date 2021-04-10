@@ -44,7 +44,9 @@ class Transition {
             bgSize:'cover',
 			bgColor:'#000000',
 			bgOpacity:0.7,
+			fadeIn: 400,
 			delay:5000,
+			fadeOut:400,
 			skippable:true,
 			content:""
 
@@ -66,7 +68,7 @@ class Transition {
 			this.audio.play();
 		}
 
-		this.modal.fadeIn(400,()=>{
+		this.modal.fadeIn(this.options.fadeIn,()=>{
 			if(game.user.isGM && !this.preview && this.sceneID !==false)
 				game.scenes.get(this.sceneID).activate();
 			this.modal.find('.transition-content').fadeIn();
@@ -86,7 +88,7 @@ class Transition {
 	}
 	destroy(instant=false){
 		
-		let time = (instant) ? 0:400;
+        let time = (instant) ? 0:this.options.fadeOut;
 		clearTimeout(this.timeout);
 		if(this.audio !== null) this.fadeAudio(this.audio, time);
 		this.modal.fadeOut(time,()=>{
