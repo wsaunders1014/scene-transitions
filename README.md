@@ -29,6 +29,10 @@ game.socket.emit('module.scene-transitions', data);
 ```
 To play a transition without a scene activation, simple pass `false` as the sceneID in the data object.
 
+# 0.0.9
+Play as Transition from Journal top bar can be hidden in the module settings
+Set initial volume of the audio file
+
 # 0.0.8
 0.8 Compatability. Minor fixes and clean up
 
