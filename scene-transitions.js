@@ -82,6 +82,7 @@ class Transition {
 			this.audio = this.modal.find('audio')[0];
 			this.modal.find('audio').attr('src',this.options.audio);
 			this.audio.load();
+            this.audio.volume = this.options.volume.toFixed(1);
 			this.audio.play();
 		}
 
@@ -277,6 +278,7 @@ class TransitionForm extends FormApplication {
         const bgPosInput = html.find('input[name="bgPos"]');
         const fontSizeInput = html.find('input[name="fontSize"]')
         const textEditor = html.find('.mce-content-body');
+        const volumeSlider = html.find('input[name="volume"]');
         
         const preview = $('#transition');
         bgSizeInput.on('change', e =>{
@@ -303,6 +305,9 @@ class TransitionForm extends FormApplication {
         })
         html.find('button[name="save"]').on('click',()=>{
             this._onSubmit();
+        })
+        volumeSlider.on('change', e => {
+            preview.find('audio')[0].volume = e.target.value
         })
 
         this._activateEditor(html.find('.editor-content')[0]).then(async ()=>{
