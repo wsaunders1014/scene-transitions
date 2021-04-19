@@ -383,6 +383,17 @@ class TransitionForm extends FormApplication {
  *******************/
 Hooks.on('init',() => {;
 	console.log('Scene Transition')
+
+    game.settings.register("scene-transitions", "show-journal-header-transition", {
+        name: "Show Play as Transition in Journal window",
+        hint: "",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true
+    });
+
+
 	game.socket.on('module.scene-transitions', async (data) => {
 		console.log(data.sceneID,data.options);
 		if (!data.users || data.users.contains(game.userId)) {
@@ -554,7 +565,13 @@ Hooks.on('getJournalDirectoryEntryContext', (html,contextOptions)=>{
 });
 
 Hooks.on('renderJournalSheet', (journal)=>{
-    if(game.user.isGM && $('#'+journal.id+' > header').find('.play-transition').length == 0){
+    if(game.user.isGM && $('#'+journal.id+' > header').find('.play-transition').length == 0 && game.settings.get("scene-transitions", "show-journal-header-transition") == true) {
          $('<a class="play-transition"><i class="fas fa-play-circle"></i> Play as Transition</a>').insertAfter('#'+journal.id+' > header > h4');
     }
 })
+
+
+
+
+
+
