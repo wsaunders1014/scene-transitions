@@ -63,6 +63,7 @@ class Transition {
 			fadeIn: 400,
 			delay:4000,
 			fadeOut:1000,
+			volume: 1.0,
 			skippable:true,
 			content:""
 		}
