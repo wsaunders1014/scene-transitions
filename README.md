@@ -14,9 +14,9 @@ let data = {
 		bgSize:'cover',
 		bgColor:'#333333',
 		bgOpacity:0.7,
-		fadeIn: 400 //how long to fade in
+		fadeIn: 400, //how long to fade in
 		delay:5000, //how long for transition to stay up
-		fadeOut: 400 //how long to fade out
+		fadeOut: 400, //how long to fade out
 		skippable:true, //Allows players to skip transition with a click before delay runs out.
 		content:"TEST MACRO",
 		audio: "" //path to audio file
