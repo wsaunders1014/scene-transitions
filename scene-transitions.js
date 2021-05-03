@@ -28,6 +28,9 @@ const DEFAULT_CONFIG = {
 
 let transitionForm;
 let activeTransition;
+let playingAudio = new Sound();
+
+
 
 
 
@@ -49,6 +52,7 @@ class Transition {
 		this.timeout = null;
 		this.audio = null;
 		this.users = null;
+        this.playingAudio = null;
 	}	
 	
 	static get defaultOptions(){
@@ -74,17 +78,24 @@ class Transition {
     }
 
 	render(){
-		$('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div><audio><source src=""></audio></div>');
+		//$('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div><audio><source src=""></audio></div>');
+        $('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div></div>');
+
 		this.modal = $('#transition');
 		this.modal.css({backgroundColor:this.options.bgColor})
 		this.modal.find('.transition-bg').css({backgroundImage:'url('+this.options.bgImg+')',opacity:this.options.bgOpacity,backgroundSize:this.options.bgSize,backgroundPosition:this.options.bgPos})
 		this.modal.find('.transition-content').css({color:this.options.fontColor,fontSize:this.options.fontSize}).html(this.options.content);
+        
 		if(this.options.audio){
-			this.audio = this.modal.find('audio')[0];
-			this.modal.find('audio').attr('src',this.options.audio);
-			this.audio.load();
-            this.audio.volume = this.options.volume.toFixed(1);
-			this.audio.play();
+			//this.audio = this.modal.find('audio')[0];
+			//this.modal.find('audio').attr('src',this.options.audio);
+			//this.audio.load();
+            //this.audio.volume = this.options.volume.toFixed(1);
+			//this.audio.play();]
+
+            AudioHelper.play({src: this.options.audio, volume: this.options.volume, loop: false}, false).then( function(audio) {
+                playingAudio = audio; // a ref for fading later
+            });
 		}
 
 		this.modal.fadeIn(this.options.fadeIn,()=>{
@@ -112,7 +123,7 @@ class Transition {
 		
         let time = (instant) ? 0:this.options.fadeOut;
 		clearTimeout(this.timeout);
-		if(this.audio !== null) this.fadeAudio(this.audio, time);
+		if(this.playingAudio !== null) this.fadeAudio(playingAudio, time);
 		this.modal.fadeOut(time,()=>{
 			this.modal.remove();
 			this.modal = null;
@@ -139,6 +150,34 @@ class Transition {
 	}
 
 	fadeAudio(audio, time){
+        if(!audio.gain.value) {
+            return;
+        }
+
+        if(time == 0) {
+            audio.stop();
+            return;
+        }
+	
+        
+        let volume = audio.gain.value;
+        let targetVolume = 0.000001;
+        let speed = volume / time * 50;  
+        audio.gain.value = volume;
+        let fade = function() {
+            volume -= speed;
+            audio.gain.value = volume.toFixed(6);
+            console.log(audio.gain.value)
+            if(volume.toFixed(6) <= targetVolume){
+                audio.stop();
+                clearInterval(audioFadeTimer);
+            };
+        }
+        fade();
+        let audioFadeTimer = setInterval(fade,50);
+		
+
+        /*
         if(time == 0) return;
 		if(audio.volume){
 			let volume = audio.volume;
@@ -155,6 +194,8 @@ class Transition {
 			fade();
 			let audioFadeTimer = setInterval(fade,100);
 		};
+        */
+
 	};
 }
 
@@ -302,14 +343,19 @@ class TransitionForm extends FormApplication {
         	preview.find('.transition-content').css('font-size',e.target.value);
         })
         html.find('button[name="cancel"]').on('click',()=>{
-       		this.close();
+       		this._cancel();
         })
         html.find('button[name="save"]').on('click',()=>{
             this._onSubmit();
         })
         volumeSlider.on('change', e => {
-            preview.find('audio')[0].volume = e.target.value
+            //preview.find('audio')[0].volume = e.target.value
+            if(playingAudio.playing) {
+            playingAudio.gain.value = e.target.value
+            }
+
         })
+
 
         this._activateEditor(html.find('.editor-content')[0]).then(async ()=>{
             await this.activateEditor('content', this.editors.content.options, this.editors.content.initial);
@@ -328,6 +374,11 @@ class TransitionForm extends FormApplication {
             
         })
     }
+
+    _cancel() {
+        playingAudio.stop();
+        this.close();
+    }
    
         
     async _onSubmit(event, {updateData=null, preventClose=false, preventRender=false}={}) {
@@ -335,6 +386,10 @@ class TransitionForm extends FormApplication {
         const states = this.constructor.RENDER_STATES;
         if ( (this._state === states.NONE) || !this.options.editable || this._submitting ) return false;
         this._submitting = true;
+
+        if(playingAudio.playing) {
+            playingAudio.stop();
+        }
 
 	    // Acquire and validate Form Data
 	    const form = this.element.find("form").first()[0];

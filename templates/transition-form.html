@@ -26,15 +26,14 @@
                 <input type="text" name="bgOpacity" placeholder="0.7" value="{{bgOpacity}}">
             </div>
         </div>
+
         <div class="form-group">
              <label>{{localize "SCENES.BackgroundColor"}}</label>
             <div class="form-fields">
-                {{colorPicker target="bgColor" }}
-               <input type="text" name="bgColor" value="{{bgColor}}" data-dtype="String"/>
-                <input type="color" value="{{bgColor}}" data-edit="bgColor"/>
-
+                {{ colorPicker name="bgColor" value=bgColor }}
             </div>
         </div>
+
         <div class="form-group">
             <label>Background Size</label>
             <input type="text" name="bgSize" placeholder="cover" value="{{bgSize}}">
@@ -47,14 +46,14 @@
             <label>Font Size</label>
             <input type="text" name="fontSize" placeholder="28px" value="{{fontSize}}">
         </div>
+        
         <div class="form-group">
             <label>Font Color</label>
             <div class="form-fields">
-                {{colorPicker target="fontColor" }}
-                <input type="text" name="fontColor" value="{{fontColor}}" data-dtype="String"/>
-                <input type="color" value="{{fontColor}}" data-edit="fontColor"/>
+                {{ colorPicker name="fontColor" value=fontColor }}
             </div>
         </div>
+        
         <!--- Transition text -->
         <div style="margin-top:10px">
             <label>Transition Text</label>
