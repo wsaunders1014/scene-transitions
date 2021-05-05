@@ -25,10 +25,16 @@ const DEFAULT_CONFIG = {
 	}
 }
 
+let scenetransitions = {
+    playingAudio: new Sound(),
+    transitionForm: null,
+    activeTransition: null
+}
 
-let transitionForm;
-let activeTransition;
-let playingAudio = new Sound();
+
+//let transitionForm;
+//let activeTransition;
+
 
 
 
@@ -52,7 +58,6 @@ class Transition {
 		this.timeout = null;
 		this.audio = null;
 		this.users = null;
-        this.playingAudio = null;
 	}	
 	
 	static get defaultOptions(){
@@ -94,7 +99,7 @@ class Transition {
 			//this.audio.play();]
 
             AudioHelper.play({src: this.options.audio, volume: this.options.volume, loop: false}, false).then( function(audio) {
-                playingAudio = audio; // a ref for fading later
+                scenetransitions.playingAudio = audio; // a ref for fading later
             });
 		}
 
@@ -123,7 +128,7 @@ class Transition {
 		
         let time = (instant) ? 0:this.options.fadeOut;
 		clearTimeout(this.timeout);
-		if(this.playingAudio !== null) this.fadeAudio(playingAudio, time);
+		if(scenetransitions.playingAudio !== null) this.fadeAudio(scenetransitions.playingAudio, time);
 		this.modal.fadeOut(time,()=>{
 			this.modal.remove();
 			this.modal = null;
@@ -150,7 +155,7 @@ class Transition {
 	}
 
 	fadeAudio(audio, time){
-        if(!audio.gain.value) {
+        if(!audio) {
             return;
         }
 
@@ -343,15 +348,15 @@ class TransitionForm extends FormApplication {
         	preview.find('.transition-content').css('font-size',e.target.value);
         })
         html.find('button[name="cancel"]').on('click',()=>{
-       		this._cancel();
+       		this.close();
         })
         html.find('button[name="save"]').on('click',()=>{
             this._onSubmit();
         })
         volumeSlider.on('change', e => {
             //preview.find('audio')[0].volume = e.target.value
-            if(playingAudio.playing) {
-            playingAudio.gain.value = e.target.value
+            if(scenetransitions.playingAudio.playing) {
+            scenetransitions.playingAudio.gain.value = e.target.value
             }
 
         })
@@ -375,9 +380,10 @@ class TransitionForm extends FormApplication {
         })
     }
 
-    _cancel() {
-        playingAudio.stop();
-        this.close();
+
+    close() {
+        scenetransitions.playingAudio.stop();
+        super.close()
     }
    
         
@@ -387,8 +393,8 @@ class TransitionForm extends FormApplication {
         if ( (this._state === states.NONE) || !this.options.editable || this._submitting ) return false;
         this._submitting = true;
 
-        if(playingAudio.playing) {
-            playingAudio.stop();
+        if(scenetransitions.playingAudio.playing) {
+            scenetransitions.playingAudio.stop();
         }
 
 	    // Acquire and validate Form Data
@@ -459,8 +465,8 @@ Hooks.on('init',() => {;
    
 });
 Hooks.on('closeTransitionForm', (form)=>{
-	activeTransition.destroy(true);
-	activeTransition = null;
+	scenetransitions.activeTransition.destroy(true);
+	scenetransitions.activeTransition = null;
 	clearInterval(form.interval);
 })
 
@@ -473,8 +479,8 @@ Hooks.on('ready',()=>{
             content:journal.content,
             bgImg:journal.img
         }
-        activeTransition = new Transition(false, false, options)
-        activeTransition.render()
+        scenetransitions.activeTransition = new Transition(false, false, options)
+        scenetransitions.activeTransition.render()
         let data = {sceneID:false,options:options}
         game.socket.emit('module.scene-transitions', data);
     });
@@ -500,8 +506,8 @@ function addPlayTransitionBtn(idField) {
         callback: li => {	
          	let sceneID = li.data(idField);
          	game.scenes.preload(sceneID, true);
-        	activeTransition = new Transition(false, sceneID, game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options )
-        	activeTransition.render()
+        	scenetransitions.activeTransition = new Transition(false, sceneID, game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options )
+        	scenetransitions.activeTransition.render()
             let data = {sceneID:sceneID,options:game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options}
             game.socket.emit('module.scene-transitions', data);
             
@@ -522,9 +528,9 @@ function addCreateTransitionBtn(idField) {
         callback: li => {
         	let sceneID = li.data(idField);   
            
-          	activeTransition = new Transition(true,sceneID)
-          	activeTransition.render()
-          	transitionForm = new TransitionForm(activeTransition).render(true);
+          	scenetransitions.activeTransition = new Transition(true,sceneID)
+          	scenetransitions.activeTransition.render()
+          	scenetransitions.transitionForm = new TransitionForm(scenetransitions.activeTransition).render(true);
         }
     };
 }
@@ -541,10 +547,10 @@ function addEditTransitionBtn(idField) {
         },
         callback: li => {
         	let scene = game.scenes.get(li.data(idField));   
-          	activeTransition = new Transition(true,li.data(idField),scene.getFlag('scene-transitions','transition').options)
-          	activeTransition.render()
+          	scenetransitions.activeTransition = new Transition(true,li.data(idField),scene.getFlag('scene-transitions','transition').options)
+          	scenetransitions.activeTransition.render()
           	
-          	transitionForm = new TransitionForm(activeTransition).render(true);
+          	scenetransitions.transitionForm = new TransitionForm(scenetransitions.activeTransition).render(true);
         }
     };
 }
@@ -587,8 +593,8 @@ function addPlayTransitionBtnJE(idField) {
                 content:journal.content,
                 bgImg:journal.img
             }
-            activeTransition = new Transition(false, false, options)
-            activeTransition.render()
+            scenetransitions.activeTransition = new Transition(false, false, options)
+            scenetransitions.activeTransition.render()
             let data = {sceneID:false,options:options}
             game.socket.emit('module.scene-transitions', data);
             
