@@ -5,41 +5,6 @@
 *************************/
 
 
-const stmod = 'scene-transitions';
-let sceneID = null;
-const PATH = "modules/scene-transitions";
-const exampleText = `You set out from Neverwinter, eager for your first adventure. The cart moves at a steady pace across the grasslands. Merchants pass in caravans, and the odd sighting of patrols of the City Guard become sparser as you move away from the city.
-
-After almost two days of travel, your horses come to an abrupt stop and begin to stamp their feet nervously. A hundred feet ahead in the trail, a pair of dead horses lay in the road, riddled with black arrows. 
-
-The woods around you are eerily silent.`;
-
-const DEFAULT_CONFIG = {
-	sceneTransition:{
-		form:{
-			title:{
-				create:'Create Transition',
-				edit:'Edit Transition'
-			}
-		}
-	}
-}
-
-let scenetransitions = {
-    playingAudio: new Sound(),
-    transitionForm: null,
-    activeTransition: null
-}
-
-
-//let transitionForm;
-//let activeTransition;
-
-
-
-
-
-
 
 /**
  * The magic happens here
@@ -47,22 +12,38 @@ let scenetransitions = {
  * @param sceneID: The scene to transition to
  * @param options: See default options below for a list of all available
  */
+
 class Transition {
-	constructor(preview, sceneID = false, options){
+
+    /**
+     * 
+     * @param {*} preview 
+     * @param {*} options: v0.1.1 options go here. Previously sceneID
+     * @param {*} optionsBackCompat: Previously used for options. Deprecated as of 0.1.1
+     */
+	constructor(preview, options, optionsBackCompat){
+        //Allow for older versions
+        if(optionsBackCompat) {
+            optionsBackCompat.sceneID = options;
+            options = optionsBackCompat;
+        }
+
 		this.preview = preview;
-		this.sceneID = sceneID;
-		this.options = mergeObject(this.constructor.defaultOptions, options || {});
-		
+		this.options = {
+            ...this.constructor.defaultOptions,
+            ...options
+        }
+        this.sceneID = this.options.sceneID;
 		this.journal = null;
 		this.modal = null;
-		this.timeout = null;
-		this.audio = null;
-		this.users = null;
+        this.playingAudio = new Sound()
 	}	
 	
 	static get defaultOptions(){
 		return{
-			fontColor:'#ffffff',
+            sceneID: false,
+            hideGM: true,
+			fontColor:'#777777',
 			fontSize:'28px',
 			bgImg:'',
 			bgPos:'center center',
@@ -78,11 +59,24 @@ class Transition {
 		}
 	}
 
+    static macro(options, showMe) {
+        game.socket.emit('module.scene-transitions', options);
+
+        if(showMe) {
+            let activeTransition = new Transition(false, options)
+            activeTransition.render()
+        }
+    }
+
     createFromJournal(journalID){
         //todo
     }
 
 	render(){
+        if(this.options.hideGM && this.options.fromSocket) {
+            return;
+        }
+
 		//$('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div><audio><source src=""></audio></div>');
         $('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div></div>');
 
@@ -92,15 +86,25 @@ class Transition {
 		this.modal.find('.transition-content').css({color:this.options.fontColor,fontSize:this.options.fontSize}).html(this.options.content);
         
 		if(this.options.audio){
-			//this.audio = this.modal.find('audio')[0];
-			//this.modal.find('audio').attr('src',this.options.audio);
-			//this.audio.load();
-            //this.audio.volume = this.options.volume.toFixed(1);
-			//this.audio.play();]
+            if(game.audio.locked) {
+                console.log ("Scene Transitions | Audio playback locked, cannot play " + this.options.audio)
+            } else {
+                let that = this;
+                AudioHelper.play({src: this.options.audio, volume: this.options.volume, loop: false}, false).then( function(audio) {
+                    audio.on('start', (a)=>{
+                        
+                    });
+                    audio.on('stop', (a)=>{
+                        
+                    });
+                    audio.on('end', (a)=>{
+                        
+                    });
 
-            AudioHelper.play({src: this.options.audio, volume: this.options.volume, loop: false}, false).then( function(audio) {
-                scenetransitions.playingAudio = audio; // a ref for fading later
-            });
+                    that.playingAudio = audio; // a ref for fading later                
+                });
+            }
+            
 		}
 
 		this.modal.fadeIn(this.options.fadeIn,()=>{
@@ -128,7 +132,7 @@ class Transition {
 		
         let time = (instant) ? 0:this.options.fadeOut;
 		clearTimeout(this.timeout);
-		if(scenetransitions.playingAudio !== null) this.fadeAudio(scenetransitions.playingAudio, time);
+		if(this.playingAudio.playing) this.fadeAudio(this.playingAudio, time);
 		this.modal.fadeOut(time,()=>{
 			this.modal.remove();
 			this.modal = null;
@@ -137,13 +141,7 @@ class Transition {
 
 	updateData(newData){
 		this.options = mergeObject(this.options,newData);
-		
 		return this;
-
-	}
-
-	playSound(){
-
 	}
 
 	getJournalText(){
@@ -155,7 +153,7 @@ class Transition {
 	}
 
 	fadeAudio(audio, time){
-        if(!audio) {
+        if(!audio.playing) {
             return;
         }
 
@@ -164,7 +162,6 @@ class Transition {
             return;
         }
 	
-        
         let volume = audio.gain.value;
         let targetVolume = 0.000001;
         let speed = volume / time * 50;  
@@ -172,7 +169,6 @@ class Transition {
         let fade = function() {
             volume -= speed;
             audio.gain.value = volume.toFixed(6);
-            console.log(audio.gain.value)
             if(volume.toFixed(6) <= targetVolume){
                 audio.stop();
                 clearInterval(audioFadeTimer);
@@ -180,27 +176,6 @@ class Transition {
         }
         fade();
         let audioFadeTimer = setInterval(fade,50);
-		
-
-        /*
-        if(time == 0) return;
-		if(audio.volume){
-			let volume = audio.volume;
-			let targetVolume = 0;
-			let speed = volume / time * 100;  
-			audio.volume = volume;
-			let fade = function() {
-				volume -= speed;
-				audio.volume = volume.toFixed(1);
-				if(volume.toFixed(1) <= targetVolume){
-					clearInterval(audioFadeTimer);
-				};
-			}
-			fade();
-			let audioFadeTimer = setInterval(fade,100);
-		};
-        */
-
 	};
 }
 
@@ -227,8 +202,8 @@ class TransitionForm extends FormApplication {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
             id: "transition-form",
-            title: DEFAULT_CONFIG.sceneTransition.form.title.create,
-            template: `${PATH}/templates/transition-form.html`,
+            title: "Edit Transition",
+            template: `modules/scene-transitions/templates/transition-form.html`,
             classes: ["sheet","transition-form"],
             height:500,
            	width:436
@@ -243,6 +218,7 @@ class TransitionForm extends FormApplication {
          let transition = this.transition.options;
          return transition;
     }
+
     updatePreview(){
     	const w = window.innerWidth;
     	const h = window.innerHeight;
@@ -266,6 +242,7 @@ class TransitionForm extends FormApplication {
         });
         return true;
     }
+
     async _activateEditor(div) {
 
         // Get the editor content div
@@ -355,8 +332,8 @@ class TransitionForm extends FormApplication {
         })
         volumeSlider.on('change', e => {
             //preview.find('audio')[0].volume = e.target.value
-            if(scenetransitions.playingAudio.playing) {
-            scenetransitions.playingAudio.gain.value = e.target.value
+            if(this.playingAudio.playing) {
+            this.playingAudio.gain.value = e.target.value
             }
 
         })
@@ -382,7 +359,7 @@ class TransitionForm extends FormApplication {
 
 
     close() {
-        scenetransitions.playingAudio.stop();
+        this.transition.playingAudio.stop();
         super.close()
     }
    
@@ -393,8 +370,8 @@ class TransitionForm extends FormApplication {
         if ( (this._state === states.NONE) || !this.options.editable || this._submitting ) return false;
         this._submitting = true;
 
-        if(scenetransitions.playingAudio.playing) {
-            scenetransitions.playingAudio.stop();
+        if(this.playingAudio.playing) {
+            this.playingAudio.stop();
         }
 
 	    // Acquire and validate Form Data
@@ -410,7 +387,7 @@ class TransitionForm extends FormApplication {
        
 	   
 	    this.transition.updateData(formData);
-	    if(sceneID != false)
+	    //if(scenetransition.sceneID != false)
 	       game.scenes.get(this.transition.sceneID).setFlag('scene-transitions','transition',this.transition)
 	  
 	    this._submitting = false;
@@ -456,17 +433,22 @@ Hooks.on('init',() => {;
     });
 
 
-	game.socket.on('module.scene-transitions', async (data) => {
-		console.log(data.sceneID,data.options);
-		if (!data.users || data.users.contains(game.userId)) {
-			new Transition(false,data.sceneID, data.options).render();
+	game.socket.on('module.scene-transitions', async (options) => {
+		if (!options.users || options.users.contains(game.userId)) {
+            options = {
+                ...options,
+                fromSocket: true
+            }
+			new Transition(false, options).render();
 		}
 	})
    
 });
+
+
 Hooks.on('closeTransitionForm', (form)=>{
-	scenetransitions.activeTransition.destroy(true);
-	scenetransitions.activeTransition = null;
+    let activeTransition = form.object;
+    activeTransition.destroy(true)
 	clearInterval(form.interval);
 })
 
@@ -479,10 +461,8 @@ Hooks.on('ready',()=>{
             content:journal.content,
             bgImg:journal.img
         }
-        scenetransitions.activeTransition = new Transition(false, false, options)
-        scenetransitions.activeTransition.render()
-        let data = {sceneID:false,options:options}
-        game.socket.emit('module.scene-transitions', data);
+        new Transition(false, options).render()
+        game.socket.emit('module.scene-transitions', options);
     });
 })
 
@@ -506,10 +486,10 @@ function addPlayTransitionBtn(idField) {
         callback: li => {	
          	let sceneID = li.data(idField);
          	game.scenes.preload(sceneID, true);
-        	scenetransitions.activeTransition = new Transition(false, sceneID, game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options )
-        	scenetransitions.activeTransition.render()
-            let data = {sceneID:sceneID,options:game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options}
-            game.socket.emit('module.scene-transitions', data);
+            let options = game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options;
+        	let activeTransition = new Transition(false, options)
+        	activeTransition.render()
+            game.socket.emit('module.scene-transitions', options);
             
         }
     };
@@ -528,9 +508,9 @@ function addCreateTransitionBtn(idField) {
         callback: li => {
         	let sceneID = li.data(idField);   
            
-          	scenetransitions.activeTransition = new Transition(true,sceneID)
-          	scenetransitions.activeTransition.render()
-          	scenetransitions.transitionForm = new TransitionForm(scenetransitions.activeTransition).render(true);
+          	new Transition(true,{sceneID: sceneID})
+          	activeTransition.render()
+          	new TransitionForm(activeTransition).render(true);
         }
     };
 }
@@ -547,10 +527,9 @@ function addEditTransitionBtn(idField) {
         },
         callback: li => {
         	let scene = game.scenes.get(li.data(idField));   
-          	scenetransitions.activeTransition = new Transition(true,li.data(idField),scene.getFlag('scene-transitions','transition').options)
-          	scenetransitions.activeTransition.render()
-          	
-          	scenetransitions.transitionForm = new TransitionForm(scenetransitions.activeTransition).render(true);
+          	let activeTransition = new Transition(true ,scene.getFlag('scene-transitions','transition').options)
+          	activeTransition.render()
+          	new TransitionForm(activeTransition).render(true);
         }
     };
 }
@@ -567,9 +546,7 @@ function addDeleteTransitionBtn(idField) {
         },
         callback: li => {
         	let scene = game.scenes.get(li.data(idField));   
-           
           	scene.unsetFlag('scene-transitions','transition');
-
         }
     };
 }
@@ -593,8 +570,8 @@ function addPlayTransitionBtnJE(idField) {
                 content:journal.content,
                 bgImg:journal.img
             }
-            scenetransitions.activeTransition = new Transition(false, false, options)
-            scenetransitions.activeTransition.render()
+            let activeTransition = new Transition(false, options)
+            activeTransition.render()
             let data = {sceneID:false,options:options}
             game.socket.emit('module.scene-transitions', data);
             
