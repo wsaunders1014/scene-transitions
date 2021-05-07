@@ -4,30 +4,30 @@ Allows GM to make simple transitions to show players before navigating to new sc
 Macro sample code:
 
 ```javascript
-let data = {
-	sceneID:false,
-	options:{
-		fontColor:'#ffffff',
-		fontSize:'28px',
-		bgImg:'', // pass any relative or absolute image url here.
-		bgPos:'center center',
-		bgSize:'cover',
-		bgColor:'#333333',
-		bgOpacity:0.7,
-		fadeIn: 400, //how long to fade in
-		delay:5000, //how long for transition to stay up
-		fadeOut: 400, //how long to fade out
-		skippable:true, //Allows players to skip transition with a click before delay runs out.
-		content:"TEST MACRO",
-		audio: "" //path to audio file
-	}
-}
-
-activeTransition = new Transition(false, data.sceneID, data.options) //
-activeTransition.render()// These 2 lines can be omitted if you don't want to personally see the transition.
-game.socket.emit('module.scene-transitions', data);
+Transition.macro({
+	sceneID:false, // scene id of the scene to transition to (false for none)
+	fontColor:'#ffffff',
+	fontSize:'28px',
+	content:"TEST MACRO",
+	bgImg:'', // pass any relative or absolute image url here.
+	bgPos:'center center',
+	bgSize:'cover',
+	bgColor:'#333333',
+	bgOpacity:0.7,
+	fadeIn: 400, //how long to fade in
+	delay:5000, //how long for transition to stay up
+	fadeOut: 400, //how long to fade out
+	audio: "" //path to audio file
+	volume: 1.0 //volume of audio
+	skippable:true, //Allows players to skip transition with a click before delay runs out.
+})
 ```
-To play a transition without a scene activation, simple pass `false` as the sceneID in the data object.
+
+# 0.1.1
+Foundry 0.8.2+ compatability
+Use Web Audio API for Audio
+New simplified macro (the old way still works, but is deprecated)
+Removed variables in the global namespace
 
 # 0.0.9
 Play as Transition from Journal top bar can be hidden in the module settings  
