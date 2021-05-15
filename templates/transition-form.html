@@ -101,6 +101,16 @@
             <input type="checkbox" name="skippable" data-dtype="Boolean" {{checked skippable}}/>
             <p class="notes">Allow user to end transition before timer ends.</p>
         </div>
+        <div class="form-group">
+            <label>GM ends for all</label>
+            <input type="checkbox" name="gmEndAll" data-dtype="Boolean" {{checked gmEndAll}}/>
+            <p class="notes">If the GM ends the transition, end for everyone</p>
+        </div>
+        <div class="form-group">
+            <label>Don't show other GM windows</label>
+            <input type="checkbox" name="hideGM" data-dtype="Boolean" {{checked hideGM}}/>
+            <p class="notes">Don't show on other windows logged in as a GM.</p>
+        </div>
     </div>
 
 

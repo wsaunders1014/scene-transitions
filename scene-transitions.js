@@ -13,7 +13,7 @@
  * @param options: See default options below for a list of all available
  */
 
-class Transition {
+ class Transition {
 
     /**
      * 
@@ -36,8 +36,16 @@ class Transition {
         this.sceneID = this.options.sceneID;
 		this.journal = null;
 		this.modal = null;
-        this.playingAudio = new Sound()
-	}	
+        this.destroying = false;
+        if(Transition.hasNewAudioAPI) {
+            this.playingAudio = new Sound()
+        } else {
+            this.audio = null;
+        }
+        
+	}
+
+    static activeTransition = new Transition;
 	
 	static get defaultOptions(){
 		return{
@@ -55,9 +63,122 @@ class Transition {
 			fadeOut:1000,
 			volume: 1.0,
 			skippable:true,
+            gmEndAll:true,
 			content:""
 		}
 	}
+
+    static get hasNewAudioAPI(){
+        return typeof Howl != 'undefined' ? false : true;
+    }
+
+    /********************
+     * Button functions for Foundry menus and window headers
+     *******************/
+    static addPlayTransitionBtn(idField) {
+        return {
+            name: "Play Transition",
+            icon: '<i class="fas fa-play-circle"></i>',
+            condition: li => {
+                
+                if(game.user.isGM && typeof game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition') =='object')
+                    return true;
+            },
+            callback: li => {	
+                let sceneID = li.data(idField);
+                game.scenes.preload(sceneID, true);
+                let options = game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options;
+                options.sceneID = sceneID;
+                let activeTransition = new Transition(false, options)
+                activeTransition.render()
+                game.socket.emit('module.scene-transitions', options);
+                
+            }
+        };
+    }
+
+
+    static addCreateTransitionBtn(idField) {
+        return {
+            name: "Create Transition",
+            icon: '<i class="fas fa-plus-square"></i>',
+            condition: li => {
+        
+                if(game.user.isGM && !game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition'))
+                    return true;
+            },
+            callback: li => {
+                let sceneID = li.data(idField);   
+            
+                let activeTransition = new Transition(true,{sceneID: sceneID})
+                activeTransition.render()
+                new TransitionForm(activeTransition).render(true);
+            }
+        };
+    }
+
+
+    static addEditTransitionBtn(idField) {
+        return {
+            name: "Edit Transition",
+            icon: '<i class="fas fa-edit"></i>',
+            condition: li => {
+                
+                if(game.user.isGM && game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition'))
+                    return true;
+            },
+            callback: li => {
+                let scene = game.scenes.get(li.data(idField));   
+                let activeTransition = new Transition(true ,scene.getFlag('scene-transitions','transition').options)
+                activeTransition.render()
+                new TransitionForm(activeTransition).render(true);
+            }
+        };
+    }
+
+
+    static addDeleteTransitionBtn(idField) {	
+        return {
+            name: "Delete Transition",
+            icon: '<i class="fas fa-trash-alt"></i>',
+            condition: li => {
+            
+                if(game.user.isGM && game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition'))
+                    return true;
+            },
+            callback: li => {
+                let scene = game.scenes.get(li.data(idField));   
+                scene.unsetFlag('scene-transitions','transition');
+            }
+        };
+    }
+
+
+    static addPlayTransitionBtnJE(idField) {
+        return {
+            name: "Play Transition From Journal",
+            icon: '<i class="fas fa-play-circle"></i>',
+            condition: li => {
+                
+                if(game.user.isGM)
+                    return true;
+            },
+            callback: li => {
+
+                let id = li.data(idField);
+
+                let journal = game.journal.get(id).data;
+                let options = {
+                    sceneID: false,
+                    content:journal.content,
+                    bgImg:journal.img
+                }
+                let activeTransition = new Transition(false, options)
+                activeTransition.render()
+                game.socket.emit('module.scene-transitions', options);
+            }
+        };
+    }
 
     static macro(options, showMe) {
         game.socket.emit('module.scene-transitions', options);
@@ -68,17 +189,29 @@ class Transition {
         }
     }
 
+
+
     createFromJournal(journalID){
         //todo
     }
 
+
+
+
+
+
 	render(){
-        if(this.options.hideGM && this.options.fromSocket) {
+        Transition.activeTransition = this;
+        if(this.options.hideGM && this.options.fromSocket && game.user.isGM) {
             return;
         }
 
-		//$('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div><audio><source src=""></audio></div>');
-        $('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div></div>');
+        if(Transition.hasNewAudioAPI) {
+            $('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div></div>');
+        } else {
+            $('body').append('<div id="transition" class="transition"><div class="transition-bg"></div><div class="transition-content"></div><audio><source src=""></audio></div>');
+
+        }
 
 		this.modal = $('#transition');
 		this.modal.css({backgroundColor:this.options.bgColor})
@@ -86,25 +219,35 @@ class Transition {
 		this.modal.find('.transition-content').css({color:this.options.fontColor,fontSize:this.options.fontSize}).html(this.options.content);
         
 		if(this.options.audio){
-            if(game.audio.locked) {
-                console.log ("Scene Transitions | Audio playback locked, cannot play " + this.options.audio)
-            } else {
-                let that = this;
-                AudioHelper.play({src: this.options.audio, volume: this.options.volume, loop: false}, false).then( function(audio) {
-                    audio.on('start', (a)=>{
-                        
-                    });
-                    audio.on('stop', (a)=>{
-                        
-                    });
-                    audio.on('end', (a)=>{
-                        
-                    });
 
-                    that.playingAudio = audio; // a ref for fading later                
-                });
+            if(Transition.hasNewAudioAPI) {
+                // 0.8.1+
+                if(game.audio.locked) {
+                    console.log ("Scene Transitions | Audio playback locked, cannot play " + this.options.audio)
+                } else {
+                    let thisTransition = this;
+                    AudioHelper.play({src: this.options.audio, volume: this.options.volume, loop: false}, false).then( function(audio) {
+                        audio.on('start', (a)=>{
+                            
+                        });
+                        audio.on('stop', (a)=>{
+                            
+                        });
+                        audio.on('end', (a)=>{
+                            
+                        });
+
+                        thisTransition.playingAudio = audio; // a ref for fading later                
+                    });
+                }
+            } else {
+                // 0.7.9
+                this.audio = this.modal.find('audio')[0];
+                this.modal.find('audio').attr('src',this.options.audio);
+                this.audio.load();
+                this.audio.volume = this.options.volume.toFixed(1);
+                this.audio.play();
             }
-            
 		}
 
 		this.modal.fadeIn(this.options.fadeIn,()=>{
@@ -117,6 +260,9 @@ class Transition {
 		})
 		if(this.options.skippable && !this.preview){
 			this.modal.on('click',()=>{
+                if(this.options.gmEndAll && game.user.isGM) {
+                    game.socket.emit('module.scene-transitions', {action: "end"});
+                }
 				this.destroy()
 			})
 		}
@@ -129,10 +275,20 @@ class Transition {
 	}
 
 	destroy(instant=false){
-		
+        if(this.destroying == true) return;
+
+        this.destroying = true;
         let time = (instant) ? 0:this.options.fadeOut;
 		clearTimeout(this.timeout);
-		if(this.playingAudio.playing) this.fadeAudio(this.playingAudio, time);
+        if(Transition.hasNewAudioAPI) {
+		    if(this.playingAudio.playing) {this.fadeAudio(this.playingAudio, time);}
+        } else {
+            if(this.audio !== null) this.fadeAudio(this.audio, time);
+            this.modal.fadeOut(time,()=>{
+                this.modal.remove();
+                this.modal = null;
+            })
+        }
 		this.modal.fadeOut(time,()=>{
 			this.modal.remove();
 			this.modal = null;
@@ -153,30 +309,101 @@ class Transition {
 	}
 
 	fadeAudio(audio, time){
-        if(!audio.playing) {
-            return;
-        }
 
-        if(time == 0) {
-            audio.stop();
-            return;
-        }
-	
-        let volume = audio.gain.value;
-        let targetVolume = 0.000001;
-        let speed = volume / time * 50;  
-        audio.gain.value = volume;
-        let fade = function() {
-            volume -= speed;
-            audio.gain.value = volume.toFixed(6);
-            if(volume.toFixed(6) <= targetVolume){
+        if(Transition.hasNewAudioAPI) {
+            // 0.8.1+
+            if(!audio.playing) {
+                return;
+            }
+
+            if(time == 0) {
                 audio.stop();
-                clearInterval(audioFadeTimer);
+                return;
+            }
+        
+            let volume = audio.gain.value;
+            let targetVolume = 0.000001;
+            let speed = volume / time * 50;  
+            audio.gain.value = volume;
+            let fade = function() {
+                volume -= speed;
+                audio.gain.value = volume.toFixed(6);
+                if(volume.toFixed(6) <= targetVolume){
+                    audio.stop();
+                    clearInterval(audioFadeTimer);
+                };
+            }
+            fade();
+            let audioFadeTimer = setInterval(fade,50);
+
+        } else {
+            // 0.7.9
+            if(time == 0) return;
+            if(audio.volume){
+                let volume = audio.volume;
+                let targetVolume = 0;
+                let speed = volume / time * 100;  
+                audio.volume = volume;
+                let fade = function() {
+                    volume -= speed;
+                    audio.volume = volume.toFixed(1);
+                    if(volume.toFixed(1) <= targetVolume){
+                        clearInterval(audioFadeTimer);
+                    };
+                }
+                fade();
+                let audioFadeTimer = setInterval(fade,100);
             };
-        }
-        fade();
-        let audioFadeTimer = setInterval(fade,50);
+        };
 	};
+
+
+
+
+    
+    static registerSettings() {
+        game.settings.register("scene-transitions", "show-journal-header-transition", {
+            name: "Show Play as Transition in Journal window",
+            hint: "",
+            scope: "world",
+            config: true,
+            type: Boolean,
+            default: true
+        });
+    }
+
+    static registerSockets() {
+        game.socket.on('module.scene-transitions', async (data) => {
+            if(data.action) {
+                switch (data.action) {
+                    case "end":
+                        Transition.activeTransition.destroy();
+                        break;
+                
+                    default:
+                        break;
+                }
+
+
+            } else {
+                
+                // Run a transition
+                let options = data;
+                if (!options.users || options.users.contains(game.userId)) {
+                    options = {
+                        ...options,
+                        fromSocket: true
+                    }
+                    new Transition(false, options).render();
+                }
+            }
+
+        })
+
+    }
+
+
+
 }
 
 
@@ -359,7 +586,9 @@ class TransitionForm extends FormApplication {
 
 
     close() {
-        this.transition.playingAudio.stop();
+        if(Transition.hasNewAudioAPI) {
+            this.transition.playingAudio.stop();
+        }
         super.close()
     }
    
@@ -370,9 +599,10 @@ class TransitionForm extends FormApplication {
         if ( (this._state === states.NONE) || !this.options.editable || this._submitting ) return false;
         this._submitting = true;
 
-        if(this.playingAudio.playing) {
-            this.playingAudio.stop();
+        if(Transition.hasNewAudioAPI) {
+            this.transition.playingAudio.stop();
         }
+
 
 	    // Acquire and validate Form Data
 	    const form = this.element.find("form").first()[0];
@@ -387,7 +617,7 @@ class TransitionForm extends FormApplication {
        
 	   
 	    this.transition.updateData(formData);
-	    //if(scenetransition.sceneID != false)
+	    if(this.transition.sceneID != false)
 	       game.scenes.get(this.transition.sceneID).setFlag('scene-transitions','transition',this.transition)
 	  
 	    this._submitting = false;
@@ -422,27 +652,8 @@ class TransitionForm extends FormApplication {
  *******************/
 Hooks.on('init',() => {;
 	console.log('Scene Transition')
-
-    game.settings.register("scene-transitions", "show-journal-header-transition", {
-        name: "Show Play as Transition in Journal window",
-        hint: "",
-        scope: "world",
-        config: true,
-        type: Boolean,
-        default: true
-    });
-
-
-	game.socket.on('module.scene-transitions', async (options) => {
-		if (!options.users || options.users.contains(game.userId)) {
-            options = {
-                ...options,
-                fromSocket: true
-            }
-			new Transition(false, options).render();
-		}
-	})
-   
+    Transition.registerSettings();
+    Transition.registerSockets();   
 });
 
 
@@ -471,113 +682,7 @@ Hooks.on('ready',()=>{
 
 
 
-/********************
- * Button functions for Foundry menus and window headers
- *******************/
-function addPlayTransitionBtn(idField) {
-    return {
-        name: "Play Transition",
-        icon: '<i class="fas fa-play-circle"></i>',
-        condition: li => {
-        	
-        	if(game.user.isGM && typeof game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition') =='object')
-        		return true;
-        },
-        callback: li => {	
-         	let sceneID = li.data(idField);
-         	game.scenes.preload(sceneID, true);
-            let options = game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition').options;
-        	let activeTransition = new Transition(false, options)
-        	activeTransition.render()
-            game.socket.emit('module.scene-transitions', options);
-            
-        }
-    };
-}
 
-
-function addCreateTransitionBtn(idField) {
-    return {
-        name: "Create Transition",
-        icon: '<i class="fas fa-plus-square"></i>',
-        condition: li => {
-       
-        	if(game.user.isGM && !game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition'))
-        		return true;
-        },
-        callback: li => {
-        	let sceneID = li.data(idField);   
-           
-          	new Transition(true,{sceneID: sceneID})
-          	activeTransition.render()
-          	new TransitionForm(activeTransition).render(true);
-        }
-    };
-}
-
-
-function addEditTransitionBtn(idField) {
-    return {
-        name: "Edit Transition",
-        icon: '<i class="fas fa-edit"></i>',
-        condition: li => {
-        	
-        	if(game.user.isGM && game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition'))
-        		return true;
-        },
-        callback: li => {
-        	let scene = game.scenes.get(li.data(idField));   
-          	let activeTransition = new Transition(true ,scene.getFlag('scene-transitions','transition').options)
-          	activeTransition.render()
-          	new TransitionForm(activeTransition).render(true);
-        }
-    };
-}
-
-
-function addDeleteTransitionBtn(idField) {	
-    return {
-        name: "Delete Transition",
-        icon: '<i class="fas fa-trash-alt"></i>',
-        condition: li => {
-        
-        	if(game.user.isGM && game.scenes.get(li.data(idField)).getFlag('scene-transitions','transition'))
-        		return true;
-        },
-        callback: li => {
-        	let scene = game.scenes.get(li.data(idField));   
-          	scene.unsetFlag('scene-transitions','transition');
-        }
-    };
-}
-
-
-function addPlayTransitionBtnJE(idField) {
-    return {
-        name: "Play Transition From Journal",
-        icon: '<i class="fas fa-play-circle"></i>',
-        condition: li => {
-            
-            if(game.user.isGM)
-                return true;
-        },
-        callback: li => {
-
-            let id = li.data(idField);
-
-            let journal = game.journal.get(id).data;
-            let options = {
-                content:journal.content,
-                bgImg:journal.img
-            }
-            let activeTransition = new Transition(false, options)
-            activeTransition.render()
-            let data = {sceneID:false,options:options}
-            game.socket.emit('module.scene-transitions', data);
-            
-        }
-    };
-}
 
 
 
@@ -586,21 +691,21 @@ function addPlayTransitionBtnJE(idField) {
  *******************/
 //Credit to Winks' Everybody Look Here for the code to add menu option to Scene Nav
 Hooks.on("getSceneNavigationContext", (html, contextOptions) => {
-    contextOptions.push(addPlayTransitionBtn('sceneId'));
-    contextOptions.push(addCreateTransitionBtn('sceneId'));
-    contextOptions.push(addEditTransitionBtn('sceneId'));
-    contextOptions.push(addDeleteTransitionBtn('sceneId'));
+    contextOptions.push(Transition.addPlayTransitionBtn('sceneId'));
+    contextOptions.push(Transition.addCreateTransitionBtn('sceneId'));
+    contextOptions.push(Transition.addEditTransitionBtn('sceneId'));
+    contextOptions.push(Transition.addDeleteTransitionBtn('sceneId'));
 });
 
 Hooks.on("getSceneDirectoryEntryContext", (html, contextOptions) => {
-    contextOptions.push(addPlayTransitionBtn('entityId'));
-    contextOptions.push(addCreateTransitionBtn('entityId'));
-    contextOptions.push(addEditTransitionBtn('entityId'));
-    contextOptions.push(addDeleteTransitionBtn('entityId'));
+    contextOptions.push(Transition.addPlayTransitionBtn('entityId'));
+    contextOptions.push(Transition.addCreateTransitionBtn('entityId'));
+    contextOptions.push(Transition.addEditTransitionBtn('entityId'));
+    contextOptions.push(Transition.addDeleteTransitionBtn('entityId'));
 });
 
 Hooks.on('getJournalDirectoryEntryContext', (html,contextOptions)=>{
-    contextOptions.push(addPlayTransitionBtnJE('entityId'));
+    contextOptions.push(Transition.addPlayTransitionBtnJE('entityId'));
 });
 
 Hooks.on('renderJournalSheet', (journal)=>{
