@@ -30,11 +30,13 @@ Transition.macro({
 To play a transition without a scene activation, simple pass `false` as the sceneID in the data object.
 
 # 0.1.1
-FVTT 0.8.2+ compatability  
+New helper for macros - Transition.macro(options, showMe)  
 Use new WebAudio API for sound (0.8.2+)  
 Added option to hide transition on other GM broswer windows (default true)
 Added option to end the transition when the GM ends iy (deafult true)
 Refactor to clean up global namespace  
+Refactor sceneID to be part of options object for simplictity
+FVTT 0.8.2+ compatability  
 
 # 0.0.9
 Play as Transition from Journal top bar can be hidden in the module settings  
