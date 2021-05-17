@@ -2,7 +2,7 @@
   "name": "scene-transitions",
   "title": "Scene Transitions",
   "description": "Create transition between scenes.",
-  "authors": ["Will Saunders","DM_miX"],
+  "authors": "WillS, DM_miX",
   "version": "0.1.1",
   "minimumCoreVersion": "0.7.9",
   "compatibleCoreVersion":"0.8.8",
