@@ -50,7 +50,7 @@
 	static get defaultOptions(){
 		return{
             sceneID: false,
-            hideGM: true,
+            gmHide: true,
 			fontColor:'#777777',
 			fontSize:'28px',
 			bgImg:'',
@@ -202,7 +202,7 @@
 
 	render(){
         Transition.activeTransition = this;
-        if(this.options.hideGM && this.options.fromSocket && game.user.isGM) {
+        if(this.options.gmHide && this.options.fromSocket && game.user.isGM) {
             return;
         }
 
@@ -258,7 +258,7 @@
 			if(!this.preview)
 				this.setDelay();
 		})
-		if(this.options.skippable && !this.preview){
+		if((this.options.skippable && !this.preview) || (this.options.gmEndAll && game.user.isGM && !this.preview)){
 			this.modal.on('click',()=>{
                 if(this.options.gmEndAll && game.user.isGM) {
                     game.socket.emit('module.scene-transitions', {action: "end"});
