@@ -7,7 +7,7 @@ Macro sample code:
 /**
  * Transition.macro(options, showMe)
  */
-Transistion.macro({
+Transition.macro({
 	sceneID: false,
 	content:"TEST MACRO",
 	fontColor:'#ffffff',
