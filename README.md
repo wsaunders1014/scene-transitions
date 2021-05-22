@@ -1,3 +1,7 @@
+Scene Transition is now mantained by DM_miX  
+https://github.com/DM-miX/scene-transitions
+
+
 # scene-transitions
 Allows GM to make simple transitions to show players before navigating to new screen. Can be used for narrative effect. Can now be used with macros to create transitionless Transitions. And journal entries can now be used to generate a Transition.
 
